@@ -1,0 +1,10 @@
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\bin\Debug\Deviate Delight.exe.config
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\bin\Debug\Deviate Delight.exe
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\bin\Debug\Deviate Delight.pdb
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate Delight.csprojAssemblyReference.cache
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate_Delight.Form1.resources
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate_Delight.Properties.Resources.resources
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate Delight.csproj.GenerateResource.cache
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate Delight.csproj.CoreCompileInputs.cache
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate Delight.exe
+C:\Users\Maxsea\source\repos\Deviate Delight\Deviate Delight\obj\Debug\Deviate Delight.pdb
