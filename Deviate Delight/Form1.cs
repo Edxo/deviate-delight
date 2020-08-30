@@ -171,6 +171,9 @@ namespace Deviate_Delight
                         PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.Menu, 0);
 
                     PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)m_key.KeyCode, 0);
+
+                    Thread.Sleep(1);
+
                     PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)m_key.KeyCode, 0);
                     
                     if (m_key.Alt)
