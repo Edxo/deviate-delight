@@ -23,12 +23,15 @@ namespace Deviate_Delight
         static extern bool PostMessage(IntPtr hWnd, UInt32 Msg, int wParam, int lParam);
         [DllImport("user32.dll")]
         static extern int MapVirtualKey(uint uCode, uint uMapType);
+        [DllImport("user32.dll")]
+        static extern short GetAsyncKeyState(Keys vKey);
 
         const int WM_KEYDOWN = 0x0100;
         const int WM_KEYUP = 0x0101;
 
         int m_pid;
         KeyEventArgs m_key;
+        KeyEventArgs m_toggle;
 
         public Form1()
         {
@@ -38,9 +41,11 @@ namespace Deviate_Delight
             this.MaximizeBox = false;
             m_pid = 0;
             m_key = null;
+            m_toggle = null;
             InitializeComponent();
             this.KeyPreview = true;
             backgroundWorker1.WorkerSupportsCancellation = true;
+            backgroundWorker2.WorkerSupportsCancellation = true;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -74,7 +79,7 @@ namespace Deviate_Delight
 
         private void form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (process1_spam_button.Enabled)
+            if (process1_spam_button.Enabled && (process_1_toggle_key_checkbox.Checked && process1_toggle_key_button.Enabled))
                 return;
             if (e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Menu)
                 return;
@@ -110,12 +115,27 @@ namespace Deviate_Delight
                 msg += ", " + map_key;
             else
                 msg += map_key;
+            
+            if (process1_spam_button.Enabled == false)
+            {
+                if (m_pid != 0)
+                    button1.Enabled = true;
 
-            m_key = e;
-            if (m_pid != 0)
-                button1.Enabled = true;
-            process1_spam_key.Text = msg;
-            process1_spam_button.Enabled = true;
+                m_key = e;
+                process1_spam_key.Text = msg;
+                process1_spam_button.Enabled = true;
+            }
+            if(process_1_toggle_key_checkbox.Checked && process1_toggle_key_button.Enabled == false)
+            {
+                process1_toggle_key.Text = msg;
+                process1_toggle_key_button.Enabled = true;
+                while (IsKeyComboPushedDown(e))
+                {
+                    Thread.Sleep(1);
+                };
+
+                m_toggle = e;
+            }
         }
 
         private void process1_spam_button_Click(object sender, EventArgs e)
@@ -125,20 +145,29 @@ namespace Deviate_Delight
 
         private void button1_Click_1(object sender, EventArgs e)
         {
+            toggle_background_thread();
+        }
+
+        private void toggle_background_thread()
+        {
+            if (m_pid == 0)
+                return;
+
             if (button1.Text == "Start")
             {
                 if (backgroundWorker1.IsBusy == true)
                     return;
 
                 backgroundWorker1.RunWorkerAsync();
-                button1.Text = "Stop";
-            } else
+                button1.BeginInvoke((MethodInvoker)delegate () { button1.Text = "Stop"; });
+            }
+            else
             {
                 if (backgroundWorker1.WorkerSupportsCancellation == false)
                     return;
 
                 backgroundWorker1.CancelAsync();
-                button1.Text = "Start";
+                button1.BeginInvoke((MethodInvoker)delegate () { button1.Text = "Start"; });
             }
         }
         
@@ -156,6 +185,14 @@ namespace Deviate_Delight
                 m_pid = 0;
                 button1.BeginInvoke((MethodInvoker)delegate () { button1.Text = "Start"; button1.Enabled = false; });
                 MessageBox.Show(except.Message, "Error", MessageBoxButtons.OK);
+                e.Cancel = true;
+                return;
+            }
+
+            if(m_key == null)
+            {
+                button1.BeginInvoke((MethodInvoker)delegate () { button1.Text = "Start"; button1.Enabled = false; });
+                e.Cancel = true;
                 return;
             }
 
@@ -202,5 +239,83 @@ namespace Deviate_Delight
                 return;
             }
         }
+
+        public static bool IsKeyPushedDown(Keys vKey)
+        {
+            return 0 != (GetAsyncKeyState(vKey) & 0x8000);
+        }
+
+        public static bool IsKeyComboPushedDown(KeyEventArgs vkey)
+        {
+            if ((vkey.Shift && !IsKeyPushedDown(Keys.ShiftKey)) || (!vkey.Shift && IsKeyPushedDown(Keys.ShiftKey)))
+                return false;
+            if (vkey.Control && !IsKeyPushedDown(Keys.ControlKey) || (!vkey.Control && IsKeyPushedDown(Keys.ControlKey)))
+                return false;
+            if (vkey.Alt && !IsKeyPushedDown(Keys.Menu) || (!vkey.Alt && IsKeyPushedDown(Keys.Menu)))
+                return false;
+            if (!IsKeyPushedDown(vkey.KeyCode))
+                return false;
+            return true;
+        }
+
+        private void toggle_thread(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            if (m_toggle == null)
+            {
+                while(m_toggle == null)
+                {
+                    Thread.Sleep(50);
+                }
+            }
+
+            while (true)
+            {
+                if (worker.CancellationPending == true)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                Thread.Sleep(1);
+
+                if (!IsKeyComboPushedDown(m_toggle))
+                    continue;
+
+                toggle_background_thread();
+
+                while (IsKeyPushedDown(m_toggle.KeyCode))
+                {
+                    Thread.Sleep(1);
+                };
+            }
+        }
+
+        private void process1_toggle_key_check_changed(object sender, EventArgs e)
+        {
+            if (process_1_toggle_key_checkbox.Checked == true)
+            {
+                if (backgroundWorker2.IsBusy == true)
+                    return;
+                backgroundWorker2.RunWorkerAsync();
+                process1_toggle_key_button.Enabled = true;
+            } else
+            {
+                if (backgroundWorker2.WorkerSupportsCancellation == false)
+                    return;
+                backgroundWorker2.CancelAsync();
+                m_toggle = null;
+                process1_toggle_key.Text = "N/A";
+                process1_toggle_key_button.Enabled = false;
+            }
+        }
+
+        private void process1_toggle_key_button_Click(object sender, EventArgs e)
+        {
+            process1_toggle_key_button.Enabled = false;
+        }
+
+
     }
 }
