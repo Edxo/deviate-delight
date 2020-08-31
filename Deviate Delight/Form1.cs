@@ -23,6 +23,8 @@ namespace Deviate_Delight
         static extern bool PostMessage(IntPtr hWnd, UInt32 Msg, int wParam, int lParam);
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(Keys vKey);
+        [DllImport("user32.dll", EntryPoint = "VkKeyScanExW")]
+        static extern short VkKeyScanExW(Char ch, IntPtr dwhkl);
 
         const int WM_KEYDOWN = 0x0100;
         const int WM_KEYUP = 0x0101;
@@ -233,20 +235,19 @@ namespace Deviate_Delight
                             ToggleKey(proc, new KeyEventArgs(Keys.Enter));
                             foreach (char key in value)
                             {
-                                Keys key_raw = (Keys)Enum.Parse(typeof(Keys), char.ToString(key).ToUpper());
+                                short vkKeyCode = VkKeyScanExW(key, InputLanguage.CurrentInputLanguage.Handle);
                                 
-                                if (char.IsUpper(key))
-                                {
+                                if ((vkKeyCode & 0xFF00) != 0)
                                     PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ShiftKey, 0);
-                                }
 
-                                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)key_raw, 0);
-                                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)key_raw, 0);
+                                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)vkKeyCode, 0);
 
-                                if (char.IsUpper(key))
-                                {
+                                Thread.Sleep(1);
+
+                                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)vkKeyCode, 0);
+
+                                if ((vkKeyCode & 0xFF00) != 0)
                                     PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ShiftKey, 0);
-                                }
                                 
                                 if (per_char > 0)
                                     Thread.Sleep(per_char);
