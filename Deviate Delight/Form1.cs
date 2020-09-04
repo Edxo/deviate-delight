@@ -329,6 +329,12 @@ namespace Deviate_Delight
                 while(m_toggle == null)
                 {
                     Thread.Sleep(50);
+
+                    if (worker.CancellationPending == true)
+                    {
+                        e.Cancel = true;
+                        return;
+                    }
                 }
             }
 
