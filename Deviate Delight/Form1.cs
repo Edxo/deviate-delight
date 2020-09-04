@@ -168,7 +168,10 @@ namespace Deviate_Delight
                         decimal duration;
                         bool ret = Decimal.TryParse(row.Cells[2].Value.ToString(), out duration);
                         if (!ret)
+                        {
+                            row.Selected = false;
                             continue;
+                        }
                         
                         if(type == "Spam")
                         {
