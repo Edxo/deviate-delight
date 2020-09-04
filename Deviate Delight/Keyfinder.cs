@@ -20,7 +20,7 @@ namespace Deviate_Delight
         public KeyEventArgs m_key;
         public string m_key_readable;
 
-        public Keyfinder()
+        public Keyfinder(bool ontop)
         {
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -29,6 +29,7 @@ namespace Deviate_Delight
             InitializeComponent();
             this.KeyPreview = true;
             m_key = null;
+            this.TopMost = ontop;
         }
 
         private void Keyfinder_KeyDown(object sender, KeyEventArgs e)

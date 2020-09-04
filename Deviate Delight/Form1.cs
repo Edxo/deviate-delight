@@ -387,7 +387,7 @@ namespace Deviate_Delight
 
         private void process1_toggle_key_button_Click(object sender, EventArgs e)
         {
-            Keyfinder key_search = new Keyfinder();
+            Keyfinder key_search = new Keyfinder(this.TopMost);
             key_search.ShowDialog();
 
             KeyEventArgs key = key_search.m_key;
@@ -464,7 +464,7 @@ namespace Deviate_Delight
             if (type != "Spam" && type != "Toggle")
                 return;
 
-            Keyfinder key_search = new Keyfinder();
+            Keyfinder key_search = new Keyfinder(this.TopMost);
             key_search.ShowDialog();
 
             KeyEventArgs key = key_search.m_key;
