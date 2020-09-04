@@ -467,6 +467,12 @@ namespace Deviate_Delight
             DataGridViewTextBoxCell cell = (DataGridViewTextBoxCell)dataGridView1.Rows[e.RowIndex].Cells[1];
             cell.Value = obj;
         }
+
+        private void alwaysOnTopToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.TopMost = !this.TopMost;
+            alwaysOnTopToolStripMenuItem.Checked = this.TopMost;
+        }
     }
 
     class Keybind_t
