@@ -25,12 +25,12 @@ namespace Deviate_Delight
         static extern short GetAsyncKeyState(Keys vKey);
         [DllImport("user32.dll", EntryPoint = "VkKeyScanExW")]
         static extern short VkKeyScanExW(Char ch, IntPtr dwhkl);
-
+        
         const int WM_KEYDOWN = 0x0100;
         const int WM_KEYUP = 0x0101;
 
         int m_pid;
-        KeyEventArgs m_toggle;
+        Keybind_t m_toggle;
 
         public Form1()
         {
@@ -44,7 +44,7 @@ namespace Deviate_Delight
             this.KeyPreview = true;
             backgroundWorker1.WorkerSupportsCancellation = true;
             backgroundWorker2.WorkerSupportsCancellation = true;
-            
+
             DataGridViewComboBoxColumn combo = new DataGridViewComboBoxColumn();
             combo.HeaderText = "Type";
             combo.Items.AddRange("Delay", "Spam", "Toggle", "Write");
@@ -58,11 +58,32 @@ namespace Deviate_Delight
             dataGridView1.CellValueChanged += new DataGridViewCellEventHandler(dataGridView1_CellValueChanged);
             dataGridView1.CurrentCellDirtyStateChanged += new EventHandler(dataGridView1_CurrentCellDirtyStateChanged);
 
-            
+            m_db = new Database();
+            m_db.SetDatabase("URI=file:context.db");
+            m_db.OpenDatabase();
+
             foreach (DataGridViewColumn column in dataGridView1.Columns)
             {
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
             }
+            
+            UpdateSavesList();
+
+            m_toggle = m_db.LoadToggle();
+            if(m_toggle != null)
+            {
+                process_1_toggle_key_checkbox.Checked = true;
+                process1_toggle_key.Text = m_toggle.readable;
+                process1_toggle_key_button.Enabled = true;
+                if (backgroundWorker2.IsBusy == true)
+                    return;
+                backgroundWorker2.RunWorkerAsync();
+            }
+        }
+        
+        ~Form1()
+        {
+            m_db.CloseDatabase();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -235,7 +256,7 @@ namespace Deviate_Delight
                             string value = row.Cells[1].Value.ToString();
                             int per_char = decimal.ToInt32(duration / value.Length);
 
-                            ToggleKey(proc, new KeyEventArgs(Keys.Enter));
+                            ToggleKey(proc, new Keycombo_t(Keys.Enter));
                             foreach (char key in value)
                             {
                                 short vkKeyCode = VkKeyScanExW(key, InputLanguage.CurrentInputLanguage.Handle);
@@ -264,7 +285,7 @@ namespace Deviate_Delight
 
                             if (per_char <= 0)
                                 Thread.Sleep(per_char);
-                            ToggleKey(proc, new KeyEventArgs(Keys.Enter));
+                            ToggleKey(proc, new Keycombo_t(Keys.Enter));
                         }
 
                         row.Selected = false;
@@ -282,26 +303,26 @@ namespace Deviate_Delight
             }
         }
 
-        public static void ToggleKey(Process proc, KeyEventArgs vkey)
+        public static void ToggleKey(Process proc, Keycombo_t key)
         {
-            if(vkey.Shift)
+            if(key.Shift)
                 PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ShiftKey, 0);
-            if (vkey.Control)
+            if (key.Control)
                 PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ControlKey, 0);
-            if (vkey.Alt)
+            if (key.Alt)
                 PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.Menu, 0);
 
-            PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)vkey.KeyCode, 0);
+            PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)key.KeyCode, 0);
 
             Thread.Sleep(1);
 
-            PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)vkey.KeyCode, 0);
+            PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)key.KeyCode, 0);
 
-            if (vkey.Alt)
+            if (key.Alt)
                 PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.Menu, 0);
-            if (vkey.Control)
+            if (key.Control)
                 PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ControlKey, 0);
-            if (vkey.Shift)
+            if (key.Shift)
                 PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ShiftKey, 0);
         }
 
@@ -310,15 +331,15 @@ namespace Deviate_Delight
             return 0 != (GetAsyncKeyState(vKey) & 0x8000);
         }
 
-        public static bool IsKeyComboPushedDown(KeyEventArgs vkey)
+        public bool IsKeyComboPushedDown(Keybind_t vkey)
         {
-            if ((vkey.Shift && !IsKeyPushedDown(Keys.ShiftKey)) || (!vkey.Shift && IsKeyPushedDown(Keys.ShiftKey)))
+            if ((vkey.m_key.Shift && !IsKeyPushedDown(Keys.ShiftKey)) || (!vkey.m_key.Shift && IsKeyPushedDown(Keys.ShiftKey)))
                 return false;
-            if (vkey.Control && !IsKeyPushedDown(Keys.ControlKey) || (!vkey.Control && IsKeyPushedDown(Keys.ControlKey)))
+            if (vkey.m_key.Control && !IsKeyPushedDown(Keys.ControlKey) || (!vkey.m_key.Control && IsKeyPushedDown(Keys.ControlKey)))
                 return false;
-            if (vkey.Alt && !IsKeyPushedDown(Keys.Menu) || (!vkey.Alt && IsKeyPushedDown(Keys.Menu)))
+            if (vkey.m_key.Alt && !IsKeyPushedDown(Keys.Menu) || (!vkey.m_key.Alt && IsKeyPushedDown(Keys.Menu)))
                 return false;
-            if (!IsKeyPushedDown(vkey.KeyCode))
+            if (!IsKeyPushedDown(vkey.m_key.KeyCode))
                 return false;
             return true;
         }
@@ -343,7 +364,7 @@ namespace Deviate_Delight
 
             while (true)
             {
-                KeyEventArgs toggle = m_toggle;
+                Keybind_t toggle = m_toggle;
                 if (worker.CancellationPending == true)
                 {
                     e.Cancel = true;
@@ -359,7 +380,7 @@ namespace Deviate_Delight
 
                 toggle_background_thread();
 
-                while (IsKeyPushedDown(toggle.KeyCode))
+                while (IsKeyPushedDown(toggle.m_key.KeyCode))
                 {
                     Thread.Sleep(1);
                 };
@@ -382,6 +403,8 @@ namespace Deviate_Delight
                 m_toggle = null;
                 process1_toggle_key.Text = "N/A";
                 process1_toggle_key_button.Enabled = false;
+
+                m_db.SaveToggle(m_toggle);
             }
         }
 
@@ -394,8 +417,13 @@ namespace Deviate_Delight
             string key_readable = key_search.m_key_readable;
             if (key == null)
                 return;
+            
+            Keybind_t obj = new Keybind_t();
+            obj.m_key = new Keycombo_t(key);
+            obj.readable = key_readable;
 
-            m_toggle = key;
+            m_toggle = obj;
+            m_db.SaveToggle(m_toggle);
             process1_toggle_key.Text = key_readable;
         }
 
@@ -473,7 +501,7 @@ namespace Deviate_Delight
                 return;
 
             Keybind_t obj = new Keybind_t();
-            obj.m_key = key;
+            obj.m_key = new Keycombo_t(key);
             obj.readable = key_readable;
 
             DataGridViewTextBoxCell cell = (DataGridViewTextBoxCell)dataGridView1.Rows[e.RowIndex].Cells[1];
@@ -485,16 +513,88 @@ namespace Deviate_Delight
             this.TopMost = !this.TopMost;
             alwaysOnTopToolStripMenuItem.Checked = this.TopMost;
         }
-    }
 
-    class Keybind_t
-    {
-        public string readable { get; set; }
-        public KeyEventArgs m_key { get; set; }
-
-        public override string ToString()
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            return readable;
+            saveForm form = new saveForm(this.TopMost);
+            form.ShowDialog();
+            string save_name = form.save_name;
+            if (save_name.Length <= 0)
+                return;
+
+            List<Action_t> actions = new List<Action_t>();
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row == null)
+                    continue;
+                if (row.Cells[0] == null || row.Cells[2] == null)
+                    continue;
+                if (row.Cells[0].Value == null || row.Cells[2].Value == null)
+                    continue;
+
+                decimal duration;
+                bool ret = Decimal.TryParse(row.Cells[2].Value.ToString(), out duration);
+                if (!ret)
+                    continue;
+
+                Action_t act;
+                try
+                {
+                    act = new Action_t((string)row.Cells[0].Value, (string)row.Cells[1].Value, decimal.ToInt32(duration));
+                    act.keybind = null;
+                } catch(InvalidCastException)
+                {
+                    act = new Action_t((string)row.Cells[0].Value, row.Cells[1].Value.ToString(), decimal.ToInt32(duration));
+                    act.keybind = (Keybind_t)row.Cells[1].Value;
+                }
+                actions.Add(act);
+            }
+            
+            Sequence_t seq = new Sequence_t(actions);
+            m_db.SaveSequence(save_name, seq);
+            UpdateSavesList();
         }
+
+        private void UpdateSavesList()
+        {
+            savesToolStripMenuItem.DropDownItems.Clear();
+            List<Sequences_t> seqs = m_db.ReadSequences();
+            savesToolStripMenuItem.Enabled = seqs.Count > 0;
+            foreach (var seq_item in seqs)
+            {
+                ToolStripItem item = savesToolStripMenuItem.DropDownItems.Add(seq_item.ToString());
+                item.Click += save_selected;
+            }
+        }
+
+        private void save_selected(object sender, EventArgs e)
+        {
+            ToolStripItem item = sender as ToolStripItem;
+            Sequence_t seq = m_db.LoadSequence(item.Text);
+
+            dataGridView1.Rows.Clear();
+            foreach(var act in seq.actions)
+            {
+                if (act.keybind == null)
+                {
+                    dataGridView1.Rows.Add(act.type, act.value, act.duration);
+
+                    if (act.type == "Delay")
+                    {
+                        DataGridViewRow row = dataGridView1.Rows[0];
+                        row.Cells[1].Style.BackColor = Color.LightGray;
+                        row.Cells[1].ReadOnly = true;
+                    }
+                }
+                else
+                    dataGridView1.Rows.Add(act.type, act.keybind, act.duration);
+            }
+        }
+
+        private Database m_db;
     }
+
+    
+
+   
 }
