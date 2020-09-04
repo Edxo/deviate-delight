@@ -414,8 +414,11 @@ namespace Deviate_Delight
                 value.ReadOnly = false;
                 return;
             } else {
-                if("Delay" == (string)type.Value)
+                if ("Delay" == (string)type.Value)
+                {
                     value.Style.BackColor = Color.LightGray;
+                    value.Value = "";
+                }
                 else
                     value.Style.BackColor = Color.White;
                 value.ReadOnly = true;
