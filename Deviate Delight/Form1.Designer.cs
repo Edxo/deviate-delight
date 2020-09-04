@@ -44,9 +44,9 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.savesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.alwaysOnTopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.savesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
@@ -193,14 +193,21 @@
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(100, 6);
+            // 
+            // savesToolStripMenuItem
+            // 
+            this.savesToolStripMenuItem.Enabled = false;
+            this.savesToolStripMenuItem.Name = "savesToolStripMenuItem";
+            this.savesToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.savesToolStripMenuItem.Text = "Saves";
             // 
             // viewToolStripMenuItem
             // 
@@ -216,13 +223,6 @@
             this.alwaysOnTopToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
             this.alwaysOnTopToolStripMenuItem.Text = "Always on top";
             this.alwaysOnTopToolStripMenuItem.Click += new System.EventHandler(this.alwaysOnTopToolStripMenuItem_Click);
-            // 
-            // savesToolStripMenuItem
-            // 
-            this.savesToolStripMenuItem.Enabled = false;
-            this.savesToolStripMenuItem.Name = "savesToolStripMenuItem";
-            this.savesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.savesToolStripMenuItem.Text = "Saves";
             // 
             // Form1
             // 

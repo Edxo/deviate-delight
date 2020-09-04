@@ -193,8 +193,8 @@ namespace Deviate_Delight
                             row.Selected = false;
                             continue;
                         }
-                        
-                        if(type == "Spam")
+
+                        if (type == "Spam")
                         {
                             if (row.Cells[1] == null || row.Cells[1].Value == null)
                             {
@@ -581,7 +581,7 @@ namespace Deviate_Delight
 
                     if (act.type == "Delay")
                     {
-                        DataGridViewRow row = dataGridView1.Rows[0];
+                        DataGridViewRow row = dataGridView1.Rows[dataGridView1.Rows.Count - 2];
                         row.Cells[1].Style.BackColor = Color.LightGray;
                         row.Cells[1].ReadOnly = true;
                     }
