@@ -592,6 +592,11 @@ namespace Deviate_Delight
         }
 
         private Database m_db;
+
+        private void githubToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/Edxo/deviate-delight");
+        }
     }
 
     
