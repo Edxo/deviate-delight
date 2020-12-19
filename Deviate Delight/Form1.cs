@@ -13,6 +13,15 @@ using System.Diagnostics;
 
 namespace Deviate_Delight
 {
+
+    public class LoopLocation_t
+    {
+        public int Start_location { get; set; }
+        public int Size { get; set; }
+        public int Count { get; set; }
+        public int Counted { get; set; }
+    }
+
     public partial class Form1 : Form
     {
         [DllImport("user32.dll")]
@@ -32,6 +41,8 @@ namespace Deviate_Delight
         int m_pid;
         Keybind_t m_toggle;
 
+        
+
         public Form1()
         {
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -47,7 +58,7 @@ namespace Deviate_Delight
 
             DataGridViewComboBoxColumn combo = new DataGridViewComboBoxColumn();
             combo.HeaderText = "Type";
-            combo.Items.AddRange("Delay", "Spam", "Toggle", "Write");
+            combo.Items.AddRange("Delay", "Spam", "Toggle", "Write", "Loop");
 
             dataGridView1.Columns.Add(combo);
             dataGridView1.Columns.Add("Value", "Value");
@@ -148,6 +159,8 @@ namespace Deviate_Delight
         {
             BackgroundWorker worker = sender as BackgroundWorker;
 
+            List<LoopLocation_t> loops = new List<LoopLocation_t>();
+
             Process proc;
             try
             {
@@ -172,8 +185,9 @@ namespace Deviate_Delight
                         return;
                     }
 
-                    foreach (DataGridViewRow row in dataGridView1.Rows)
+                    for (int i = 0; i < dataGridView1.Rows.Count; i++)
                     {
+                        DataGridViewRow row = dataGridView1.Rows[i];
                         if (dataGridView1.Rows.Count <= 1)
                             Thread.Sleep(1);
 
@@ -287,9 +301,55 @@ namespace Deviate_Delight
                                 Thread.Sleep(per_char);
                             ToggleKey(proc, new Keycombo_t(Keys.Enter));
                         }
+                        else if (type == "Loop")
+                        {
+                            if (row.Cells[1] == null || row.Cells[1].Value == null)
+                            {
+                                row.Selected = false;
+                                continue;
+                            }
+
+                            LoopLocation_t entry = new LoopLocation_t();
+                                
+                            entry.Start_location = row.Index;
+                            int tmp;
+
+                            bool retval = Int32.TryParse(row.Cells[1].Value.ToString(), out tmp);
+                            if (!retval)
+                                tmp = 0;
+                            entry.Size = tmp;
+
+                            retval = Int32.TryParse(row.Cells[2].Value.ToString(), out tmp);
+                            if (!retval)
+                                tmp = 0;
+                            entry.Count = tmp;
+
+                            entry.Counted = 1;
+
+                            loops.Add(entry);
+                        }
 
                         row.Selected = false;
+
+                        for(int jj = 0; jj < loops.Count; jj++)
+                        {
+                            LoopLocation_t loop = loops[jj];
+
+                            if (row.Index == loop.Start_location + loop.Size)
+                            {
+                                i = loop.Start_location;
+
+                                loop.Counted++;
+
+                                if (loop.Counted >= loop.Count)
+                                {
+                                    loops.RemoveAt(jj);
+                                    jj--;
+                                }
+                            }
+                        }
                     }
+                    loops.Clear();
                 }
             }
             catch (Exception except)
@@ -445,7 +505,7 @@ namespace Deviate_Delight
             DataGridViewTextBoxCell duration = (DataGridViewTextBoxCell)dataGridView1.Rows[e.RowIndex].Cells[2];
 
 
-            if ("Write" == (string)type.Value)
+            if ("Write" == (string)type.Value || "Loop" == (string)type.Value)
             {
                 value.Style.BackColor = Color.White;
                 value.ReadOnly = false;
@@ -599,7 +659,5 @@ namespace Deviate_Delight
         }
     }
 
-    
 
-   
 }
