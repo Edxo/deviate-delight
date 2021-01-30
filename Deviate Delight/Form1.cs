@@ -58,7 +58,7 @@ namespace Deviate_Delight
 
             DataGridViewComboBoxColumn combo = new DataGridViewComboBoxColumn();
             combo.HeaderText = "Type";
-            combo.Items.AddRange("Delay", "Spam", "Toggle", "Write", "Loop");
+            combo.Items.AddRange("Delay", "Spam", "Toggle", "Write", "Loop", "Press", "Release", "Stop");
 
             dataGridView1.Columns.Add(combo);
             dataGridView1.Columns.Add("Value", "Value");
@@ -202,7 +202,7 @@ namespace Deviate_Delight
                         string type = row.Cells[0].Value.ToString();
                         decimal duration;
                         bool ret = Decimal.TryParse(row.Cells[2].Value.ToString(), out duration);
-                        if (!ret)
+                        if ((!ret) && type != "Stop")
                         {
                             row.Selected = false;
                             continue;
@@ -242,6 +242,28 @@ namespace Deviate_Delight
 
                             Keybind_t obj = (Keybind_t)row.Cells[1].Value;
                             ToggleKey(proc, obj.m_key);
+                        }
+                        else if (type == "Press")
+                        {
+                            if (row.Cells[1] == null || row.Cells[1].Value == null)
+                            {
+                                row.Selected = false;
+                                continue;
+                            }
+
+                            Keybind_t obj = (Keybind_t)row.Cells[1].Value;
+                            PressKey(proc, obj.m_key);
+                        }
+                        else if (type == "Release")
+                        {
+                            if (row.Cells[1] == null || row.Cells[1].Value == null)
+                            {
+                                row.Selected = false;
+                                continue;
+                            }
+
+                            Keybind_t obj = (Keybind_t)row.Cells[1].Value;
+                            ReleaseKey(proc, obj.m_key);
                         }
                         else if(type == "Delay")
                         {
@@ -328,6 +350,12 @@ namespace Deviate_Delight
 
                             loops.Add(entry);
                         }
+                        else if (type == "Stop")
+                        {
+                            button1.BeginInvoke((MethodInvoker)delegate () { button1.Text = "Start"; });
+                            e.Cancel = true;
+                            return;
+                        }
 
                         row.Selected = false;
 
@@ -374,7 +402,43 @@ namespace Deviate_Delight
 
             PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)key.KeyCode, 0);
 
-            Thread.Sleep(1);
+            PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)key.KeyCode, 0);
+
+            if (key.Alt)
+                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.Menu, 0);
+            if (key.Control)
+                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ControlKey, 0);
+            if (key.Shift)
+                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ShiftKey, 0);
+        }
+
+        public static void PressKey(Process proc, Keycombo_t key)
+        {
+            if (key.Shift)
+                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ShiftKey, 0);
+            if (key.Control)
+                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ControlKey, 0);
+            if (key.Alt)
+                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.Menu, 0);
+
+            PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)key.KeyCode, 0);
+
+            if (key.Alt)
+                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.Menu, 0);
+            if (key.Control)
+                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ControlKey, 0);
+            if (key.Shift)
+                PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)Keys.ShiftKey, 0);
+        }
+
+        public static void ReleaseKey(Process proc, Keycombo_t key)
+        {
+            if (key.Shift)
+                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ShiftKey, 0);
+            if (key.Control)
+                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.ControlKey, 0);
+            if (key.Alt)
+                PostMessage(proc.MainWindowHandle, WM_KEYDOWN, (int)Keys.Menu, 0);
 
             PostMessage(proc.MainWindowHandle, WM_KEYUP, (int)key.KeyCode, 0);
 
@@ -515,6 +579,12 @@ namespace Deviate_Delight
                 {
                     value.Style.BackColor = Color.LightGray;
                     value.Value = "";
+                } else if("Stop" == (string)type.Value)
+                {
+                    value.Style.BackColor = Color.LightGray;
+                    value.Value = "";
+                    duration.Style.BackColor = Color.LightGray;
+                    duration.Value = "";
                 }
                 else
                     value.Style.BackColor = Color.White;
@@ -549,7 +619,7 @@ namespace Deviate_Delight
                 return;
 
             string type = (string)dataGridView1.Rows[e.RowIndex].Cells[0].Value;
-            if (type != "Spam" && type != "Toggle")
+            if (type != "Spam" && type != "Toggle" && type != "Press" && type != "Release")
                 return;
 
             Keyfinder key_search = new Keyfinder(this.TopMost);
@@ -595,7 +665,9 @@ namespace Deviate_Delight
                 decimal duration;
                 bool ret = Decimal.TryParse(row.Cells[2].Value.ToString(), out duration);
                 if (!ret)
-                    continue;
+                {
+                    duration = 0;
+                }
 
                 Action_t act;
                 try
@@ -644,6 +716,14 @@ namespace Deviate_Delight
                         DataGridViewRow row = dataGridView1.Rows[dataGridView1.Rows.Count - 2];
                         row.Cells[1].Style.BackColor = Color.LightGray;
                         row.Cells[1].ReadOnly = true;
+                    } else if(act.type == "Stop")
+                    {
+                        DataGridViewRow row = dataGridView1.Rows[dataGridView1.Rows.Count - 2];
+                        row.Cells[1].Style.BackColor = Color.LightGray;
+                        row.Cells[1].ReadOnly = true;
+                        row.Cells[2].Style.BackColor = Color.LightGray;
+                        row.Cells[2].ReadOnly = false;
+                        row.Cells[2].Value = "";
                     }
                 }
                 else
